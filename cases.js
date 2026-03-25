@@ -47,7 +47,7 @@ const CASES = [
     }
   }
    {
-    id: 1,
+    id: 2,
     name: "Coughting Fit",
     difficulty: "Medium",
     vitals: { HR: 110, BP: "100/65", O2: 88, Temp: 98.6 },
