@@ -2,6 +2,7 @@ let currentCase = null;
 let stageIndex = 0;
 let score = 0;
 let vitals = {};
+let isTransitioning = false;
 
 const stageTitle = document.getElementById("stage-title");
 const content = document.getElementById("content");
@@ -15,7 +16,7 @@ function renderCaseSelect() {
   nextBtn.style.display = "none";
 
   CASES.forEach(c => {
-    let div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "option";
     div.textContent = `${c.name} (${c.difficulty})`;
     div.onclick = () => startCase(c);
@@ -28,18 +29,27 @@ function startCase(c) {
   stageIndex = 0;
   score = 0;
   vitals = { ...c.vitals };
-  nextBtn.style.display = "block";
+  isTransitioning = false;
   renderStage();
 }
 
 function renderVitals() {
-  let v = document.createElement("div");
+  let v = document.getElementById("vitals-box");
+  if (!v) {
+    v = document.createElement("div");
+    v.id = "vitals-box";
+    content.prepend(v);
+  }
   v.innerHTML = `<strong>Vitals:</strong><br>
-    HR: ${vitals.HR} | BP: ${vitals.BP} | O2: ${vitals.O2}% | Temp: ${vitals.Temp}`;
-  content.appendChild(v);
+    HR: ${vitals.HR} bpm | BP: ${vitals.BP} | O2: ${vitals.O2}% | Temp: ${vitals.Temp.toFixed(1)}°F`;
 }
 
 function renderStage() {
+  if (stageIndex >= currentCase.stages.length) {
+    return endCase();
+  }
+
+  isTransitioning = false;
   content.innerHTML = "";
   result.textContent = "";
   const stage = currentCase.stages[stageIndex];
@@ -47,14 +57,16 @@ function renderStage() {
   renderVitals();
 
   if (stage.type === "info") {
-    let p = document.createElement("p");
+    nextBtn.style.display = "block";
+    const p = document.createElement("p");
     p.textContent = stage.text;
     content.appendChild(p);
   }
 
   if (stage.type === "choice") {
+    nextBtn.style.display = "none";
     stage.options.forEach(opt => {
-      let div = document.createElement("div");
+      const div = document.createElement("div");
       div.className = "option";
       div.textContent = opt.text;
       div.onclick = () => handleChoice(opt);
@@ -65,29 +77,34 @@ function renderStage() {
 
 function applyEffects(effect) {
   if (!effect) return;
-  for (let key in effect) {
-    if (vitals[key] !== undefined) {
+  for (const key in effect) {
+    if (vitals[key] !== undefined && typeof vitals[key] === "number") {
       vitals[key] += effect[key];
     }
   }
+  renderVitals();
 }
 
 function handleChoice(option) {
+  if (isTransitioning) return;
+
   applyEffects(option.effect);
 
   if (option.correct) {
+    isTransitioning = true;
     score++;
     result.textContent = "Correct";
     result.style.color = "green";
+    stageIndex = option.next !== undefined ? option.next : stageIndex + 1;
+    setTimeout(renderStage, 700);
   } else {
-    result.textContent = option.feedback || "Incorrect";
+    result.textContent = option.feedback || "Incorrect. Try again.";
     result.style.color = "red";
-    if (option.fail) return endCase("Patient condition worsened.");
-    return;
+    if (option.fail) {
+      isTransitioning = true;
+      setTimeout(() => endCase("Patient condition worsened."), 700);
+    }
   }
-
-  stageIndex = option.next !== undefined ? option.next : stageIndex + 1;
-  setTimeout(renderStage, 700);
 }
 
 nextBtn.onclick = () => {
@@ -101,11 +118,20 @@ nextBtn.onclick = () => {
 
 function endCase(extra = "") {
   content.innerHTML = "";
+  nextBtn.style.display = "none";
   stageTitle.textContent = "Case Complete";
-  result.innerHTML = `${extra}<br><br>
-    Score: ${score} / ${currentCase.stages.length}<br>
-    Diagnosis: ${currentCase.final.diagnosis}<br>
-    Explanation: ${currentCase.final.explanation}`;
+
+  const totalQuestions = currentCase.stages.filter(s => s.type === "choice").length;
+  result.style.color = "#222";
+  result.innerHTML = `${extra ? `<strong style="color:red;">${extra}</strong><br><br>` : ""}
+    <strong>Score:</strong> ${score} / ${totalQuestions}<br>
+    <strong>Diagnosis:</strong> ${currentCase.final.diagnosis}<br>
+    <strong>Explanation:</strong> ${currentCase.final.explanation}`;
+
+  const restartBtn = document.createElement("button");
+  restartBtn.textContent = "Back to Case Selection";
+  restartBtn.onclick = renderCaseSelect;
+  content.appendChild(restartBtn);
 }
 
 renderCaseSelect();

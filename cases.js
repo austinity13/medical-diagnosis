@@ -45,17 +45,17 @@ const CASES = [
       diagnosis: "Pneumonia",
       explanation: "Infection confirmed via imaging."
     }
-  }
-   {
+  },
+  {
     id: 2,
-    name: "Coughting Fit",
+    name: "Coughing Fit",
     difficulty: "Medium",
     vitals: { HR: 110, BP: "100/65", O2: 88, Temp: 98.6 },
     stages: [
       {
         type: "info",
         title: "History",
-        text: "27-year-old with cough, chest pain, shortness of breath, history of smoking"
+        text: "27-year-old with cough, chest pain, shortness of breath, history of smoking."
       },
       {
         type: "choice",
@@ -68,29 +68,29 @@ const CASES = [
       {
         type: "info",
         title: "Results",
-        text: "X-ray shows mucus buildup."
+        text: "X-ray shows mucus buildup without focal consolidation."
       },
       {
         type: "choice",
         title: "Diagnosis",
         options: [
           { text: "Cold", correct: false },
-          { text: "Pneumonia", correct: true },
-          { text: "Bronchitis", correct: false }
+          { text: "Pneumonia", correct: false },
+          { text: "Bronchitis", correct: true }
         ]
       },
       {
         type: "choice",
         title: "Treatment",
         options: [
-          { text: "Water and Humidifier", correct: true, effect: { Temp: -2, HR: -10 } },
+          { text: "Water and Humidifier", correct: true, effect: { O2: 6, HR: -15 } },
           { text: "Ignore", correct: false, effect: { O2: -10 }, fail: true }
         ]
       }
     ],
     final: {
       diagnosis: "Bronchitis",
-      explanation: "Infection confirmed via imaging."
+      explanation: "Airway inflammation and mucus buildup without parenchymal consolidation."
     }
   }
 ];
